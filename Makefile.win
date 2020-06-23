@@ -1,0 +1,54 @@
+# Project: I Am Dwarf
+# Makefile created by Dev-C++ 5.11
+
+CPP      = g++.exe
+CC       = gcc.exe
+WINDRES  = windres.exe
+RES      = sdl-test_private.res
+OBJ      = main.o text.o vividConsole.o objects.o graphics.o input.o sound.o undead.o $(RES)
+LINKOBJ  = main.o text.o vividConsole.o objects.o graphics.o input.o sound.o undead.o $(RES)
+LIBS     = -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib" -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/lib" -L"C:/Users/Frank/GitStuff/franks-drawing-library" -lSDL2main  -lSDL2  -lSDL2_image  -lSDL2_mixer
+INCS     = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include"
+CXXINCS  = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include/c++"
+BIN      = I_Am_Dwarf.exe
+CXXFLAGS = $(CXXINCS) -ansi -std=c++11
+CFLAGS   = $(INCS) -ansi -std=c++11
+RM       = rm.exe -f
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before $(BIN) all-after
+
+clean: clean-custom
+	${RM} $(OBJ) $(BIN)
+
+$(BIN): $(OBJ)
+	$(CPP) $(LINKOBJ) -o $(BIN) $(LIBS)
+
+main.o: main.cpp
+	$(CPP) -c main.cpp -o main.o $(CXXFLAGS)
+
+text.o: text.cpp
+	$(CPP) -c text.cpp -o text.o $(CXXFLAGS)
+
+vividConsole.o: vividConsole.cpp
+	$(CPP) -c vividConsole.cpp -o vividConsole.o $(CXXFLAGS)
+
+objects.o: objects.cpp
+	$(CPP) -c objects.cpp -o objects.o $(CXXFLAGS)
+
+graphics.o: graphics.cpp
+	$(CPP) -c graphics.cpp -o graphics.o $(CXXFLAGS)
+
+input.o: input.cpp
+	$(CPP) -c input.cpp -o input.o $(CXXFLAGS)
+
+sound.o: sound.cpp
+	$(CPP) -c sound.cpp -o sound.o $(CXXFLAGS)
+
+undead.o: undead.cpp
+	$(CPP) -c undead.cpp -o undead.o $(CXXFLAGS)
+
+sdl-test_private.res: sdl-test_private.rc 
+	$(WINDRES) -i sdl-test_private.rc --input-format=rc -o sdl-test_private.res -O coff 
+
