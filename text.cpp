@@ -17,6 +17,7 @@ bool newMessage = false;
 //////////////////////////////////
 TextBox::TextBox(){
 	this->isVisible = false;
+	this->showForever = false;
 	this->message = "";
 }
 
@@ -29,10 +30,10 @@ void TextBox::submitMessage( std::string message ){
 void TextBox::drawMessage( SDL_Renderer* ren ){
 	unsigned int txtX, txtY;
 	
-	txtY = WINDOW_HEIGHT - 20;
-	txtX = (WINDOW_WIDTH / 2) - (this->message.length() / 2)*CHARACTER_WIDTH;
+	txtX = this->x;
+	txtY = this->y;
 	
-	if( this->isVisible ){
+	if( this->isVisible || this->showForever ){
 		
 		// draw whole message
 		for( int i = 0; i < this->message.length(); ++i ){
@@ -141,6 +142,10 @@ void shutdownText(){
 void addQueueMessage( std::string s ){
 	msgQueue = s;
 	newMessage = true;
+}
+
+std::string getQueueMessage(){
+	return msgQueue;
 }
 
 void clearMessageQueue(){

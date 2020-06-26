@@ -4,8 +4,8 @@
 
 #define SDL_MAIN_HANDLED
 
-#define WINDOW_WIDTH 1024
-#define WINDOW_HEIGHT 640
+#define WINDOW_WIDTH 1366	// default is 1024
+#define WINDOW_HEIGHT 768	// default is 640
 #define WINDOW_LEFT 560
 #define WINDOW_TOP 64
 #define WINDOW_TITLE "I Am Legend"
@@ -41,6 +41,8 @@ void cleanup();
 void doPlayerAction();
 void doRender();
 void generateNewWorld(unsigned int mapWidth, unsigned int mapHeight);
+void drawInventory();
+void drawHealth();
 
 
 

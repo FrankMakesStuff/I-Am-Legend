@@ -15,7 +15,10 @@ enum class PLAYERACTION {
 	ShowPlayerspace = 256,
 	HidePlayerspace = 512,
 	ToggleNightcolor = 1024,
-	KeyHeld = 2048
+	CycleInventory = 2048,
+	KeyHeld = 4096,
+	RequestExit = 8192
+	
 };
 
 inline PLAYERACTION operator|( PLAYERACTION a, PLAYERACTION b ){

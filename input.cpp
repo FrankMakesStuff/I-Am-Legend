@@ -20,6 +20,9 @@ PLAYERACTION getPlayerAction(){
 
 	if( state[SDL_SCANCODE_DOWN] )
 		flags = flags | PLAYERACTION::MoveDown;
+		
+	if( state[SDL_SCANCODE_TAB] )
+		flags = flags | PLAYERACTION::CycleInventory;
 
 	if( state[SDL_SCANCODE_EQUALS] )
 		flags = flags | PLAYERACTION::ZoomIn;
@@ -35,6 +38,9 @@ PLAYERACTION getPlayerAction(){
 		
 	if( state[SDL_SCANCODE_3] )
 		flags = flags | PLAYERACTION::ToggleNightcolor;
+		
+	if( state[SDL_SCANCODE_ESCAPE] )
+		flags = PLAYERACTION::RequestExit;
 	
 	// Inspect
 	if( state[SDL_SCANCODE_SPACE] ){

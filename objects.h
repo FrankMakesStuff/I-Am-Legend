@@ -29,7 +29,8 @@ enum class BASE_TYPES {
 	Door,
 	GarlicFlower,
 	Water,
-	Tree
+	Tree,
+	Dirt
 };
 
 enum class ENTITY_TYPES {
@@ -46,6 +47,8 @@ enum class ENTITY_TYPES {
 	Trowel,
 	Chainsaw,
 	Fuel,
+	GarlicRotten,
+	Apple,
 	Undefined
 };
 
@@ -67,9 +70,10 @@ const unsigned int ENTITY_FLAGS_LOCKED = 1;
 const unsigned int ENTITY_FLAGS_UNLOCKED = 2;
 const unsigned int ENTITY_FLAGS_OBTAINABLE = 4;
 const unsigned int ENTITY_FLAGS_WEAPON = 8;
-const unsigned int ENTITY_FLAGS_POWERUP = 16;
-const unsigned int ENTITY_FLAGS_DEAD = 32;
-const unsigned int ENTITY_FLAGS_BLOCKABLE = 64;
+const unsigned int ENTITY_FLAGS_TOOL = 16;
+const unsigned int ENTITY_FLAGS_POWERUP = 32;
+const unsigned int ENTITY_FLAGS_DEAD = 64;
+const unsigned int ENTITY_FLAGS_BLOCKABLE = 128;
 
 // Specific Undead flags
 const unsigned int UNDEAD_FLAGS_WANDER = 1;
@@ -83,6 +87,7 @@ const unsigned int UNDEAD_WALK_UP = 2;
 const unsigned int UNDEAD_WALK_DOWN = 3;
 const unsigned int UNDEAD_WALK_DWELL = 4;
 
+
 // BaseObject
 class BaseObject {
 	public:
@@ -90,7 +95,7 @@ class BaseObject {
 	int y;
 	int tileset_x;
 	int tileset_y;
-	unsigned int health;
+	int health;
 	BASE_TYPES baseType;
 	
 	virtual std::string toString() =0;
@@ -125,11 +130,12 @@ class Entity : public BaseObject {
 	std::vector<Entity> inventory;
 	MapTile* currentTile;
 	bool drawable;
-	Entity* owner;
+	unsigned int currentlySelectedInventory;
 	
 	public:
 	// constructor/destructor
-	Entity( int x, int y, ENTITY_TYPES type, MapTile* currentTile );
+	Entity( ENTITY_TYPES type, MapTile* currentTile );
+	Entity( ENTITY_TYPES type );
 	Entity(); // blank entity
 	~Entity();
 	
@@ -138,9 +144,11 @@ class Entity : public BaseObject {
 	unsigned int flags;
 	int flagsParam1;
 	int flagsParam2;
+	int flagsParam3;
 	int count;	// this is for inventory purposes, as opposed to making the list bigger with similar entities, just increment this
 	DIRECTION facing;
 	int index;
+	Entity* owner;
 	
 	// public methods
 	void 			update();
@@ -152,12 +160,16 @@ class Entity : public BaseObject {
 	int 			getIndex();
 	void 			getLookingAt( int &x, int &y );
 	int 			addToInventory( Entity e );
+	Entity*			checkInventory( ENTITY_TYPES type );
 	void			deleteFromInventory( unsigned int index );
 	std::string 	getActionString();
 	ENTITY_ACTIONS	getAction();
 	void 			setAction( ENTITY_ACTIONS action );
 	bool 			isDrawable();
 	bool			hasMatchingKey( Entity* lock, bool deleteKey );
+	Entity*			getSelectedInventory();
+	void			nextInventory();
+	void			faceDirection( DIRECTION dir );
 };
 
 // MapSet
@@ -169,7 +181,6 @@ class MapSet : public BaseObject {
 	unsigned int keyIterator;
 	SDL_Rect viewRect;
 	std::vector<MapTile> tileset;
-	std::vector<Entity> entities;	// entity 0 shall be reserved for the player entity
 	SDL_Renderer *ren;
 	SDL_Texture *tile_image;
 	
@@ -181,6 +192,9 @@ class MapSet : public BaseObject {
 	MapSet();
 	MapSet( int szWidth, int szHeight, SDL_Renderer *ren, std::string tileset_path );
 	~MapSet();
+	
+	// public properties
+	std::vector<Entity> entities;	// entity 0 shall be reserved for the player entity
 	
 	// public methods
 	void init( int szWidth, int szHeight, SDL_Renderer *ren, std::string tileset_path );
@@ -203,7 +217,8 @@ class MapSet : public BaseObject {
 	void showPlayerspace();
 	void hidePlayerspace();
 	void updateEntities();
-	
+	SDL_Texture* getTilesetImage();
+
 };
 
 int drawTile( SDL_Renderer *ren, MapTile tile, int dst_x, int dst_y, SDL_Texture *img, unsigned char scale );
@@ -217,12 +232,17 @@ bool tryEntityAction( Entity* actingEntity, Entity* targetEntity, MapSet* map );
 bool moveEntity( MapSet* map, Entity* e, int x, int y );
 bool attackTile( MapSet* map, Entity* attacker, MapTile* tile );
 bool inRect( SDL_Rect r, int x, int y );
+bool isValidTile( MapTile* t );
+void plantGarlic( MapSet* map, unsigned int amount );
+void dropApples( MapSet* map, unsigned int amount );
 
 // undead.cpp
 int spawnNewUndead( MapSet* map, int num );
 void updateUndead( Entity* undead );
 void moveUndead( Entity* undead, int directionFlags );
-void persuePlayer(Entity* undead, int directionFlags );
+void persuePlayer( Entity* undead, int directionFlags );
+void undeadFlee( Entity* undead, int directionFlags );
+int undeadCheckRect( Entity* undead );
 void setUndeadTime( unsigned int currentTime, unsigned int maxTime );
 
 

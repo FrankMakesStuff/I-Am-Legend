@@ -52,6 +52,10 @@ void renderColorize( SDL_Renderer* ren ) {
 	return;
 }
 
+colorStruct getAmbientColor(){
+	return daylightColor;
+}
+
 void doDaylightCycle( SDL_Renderer* ren, unsigned int &currentTime, unsigned int cycleDuration ){
 	// wrap around to zero when value goes over limit
 	if( currentTime > cycleDuration )
@@ -70,7 +74,7 @@ void drawClock( SDL_Renderer *ren, float angle ){
 	// Draw a clock
 	int centerX = WINDOW_WIDTH - CLOCK_OFFSET_X, centerY = WINDOW_HEIGHT - CLOCK_OFFSET_Y;
 	SDL_SetRenderDrawColor( ren, 200, 200, 200, CLOCK_ALPHA ); // clock face color
-	DrawCircle( ren, centerX, centerY, CLOCK_RADIUS );
+	drawCircle( ren, centerX, centerY, CLOCK_RADIUS );
 	
 	float clockHandX, clockHandY;
 	clockHandX = cos( toRadians( angle )) * (CLOCK_RADIUS * 0.7f);
@@ -80,7 +84,7 @@ void drawClock( SDL_Renderer *ren, float angle ){
 	SDL_RenderDrawLine( ren, centerX, centerY, centerX + clockHandX, centerY + clockHandY );
 }
 
-void DrawCircle(SDL_Renderer* renderer, int32_t centreX, int32_t centreY, int32_t radius)
+void drawCircle(SDL_Renderer* renderer, int32_t centreX, int32_t centreY, int32_t radius)
 {
    const int32_t diameter = (radius * 2);
 

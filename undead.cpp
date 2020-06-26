@@ -2,7 +2,7 @@
 #include "objects.h"
 
 MapSet* map_ref = nullptr;
-bool isNightTime = false;
+bool isNightTime = true;
 bool isDawn = false;
 
 int spawnNewUndead( MapSet* map, int num ){
@@ -33,7 +33,7 @@ int spawnNewUndead( MapSet* map, int num ){
 		}
 		else {
 			// create new Undead entity
-			Entity newUndead( spawnX, spawnY, ENTITY_TYPES::Undead, t );
+			Entity newUndead( ENTITY_TYPES::Undead, t );
 			map->addEntity( newUndead ); 
 			
 		}
@@ -44,33 +44,17 @@ int spawnNewUndead( MapSet* map, int num ){
 }
 
 void updateUndead( Entity* undead ){
-	unsigned int whichWay = rand() % 5; // dice-roll for how to move
-	// Create a Rect area that represents the Undead's "awareness" area
-	SDL_Rect undeadArea = {
-			undead->x - 20,
-			undead->y - 20,
-			41, 
-			41 };
 	
-	// make undead dormant if daytime
-	if( !isNightTime ){
-		undead->flags = UNDEAD_FLAGS_DORMANT;
-		undead->tileset_x = 272;
-		undead->tileset_y = 0;
-	}
-	else {
-		undead->tileset_x = 208;
-		undead->tileset_y = 0;
-	}
+	unsigned int whichWay = rand() % 5; // dice-roll for how to move
+
+	// decide what 'state' the Undead is in by checking it's immediate area
+	undeadCheckRect( undead );
 	
 	// determine what undead wants to do
 	switch( undead->flags ){
 		
 		// Wander - Undead moves aimlessly one tile at a time
 		case UNDEAD_FLAGS_WANDER:
-			// Persue player if close enough
-			if( inRect( undeadArea, map_ref->getPlayerGuy()->x, map_ref->getPlayerGuy()->y ))
-				undead->flags = UNDEAD_FLAGS_PERSUE;
 			
 			moveUndead( undead, whichWay );
 			break;
@@ -91,7 +75,7 @@ void updateUndead( Entity* undead ){
 			
 		// Flee - Undead moves away from PlayerGuy, as a result of dawn approaching soon
 		case UNDEAD_FLAGS_FLEE:
-			
+			undeadFlee( undead, whichWay );
 			break;
 			
 		default:
@@ -100,6 +84,64 @@ void updateUndead( Entity* undead ){
 	
 	return;
 }
+
+
+
+
+int undeadCheckRect( Entity* undead ){
+	int result = UNDEAD_FLAGS_WANDER;
+	
+	// Create a Rect area that represents the Undead's "awareness" area
+	SDL_Rect undeadArea = {
+			undead->x - 20,
+			undead->y - 20,
+			41, 
+			41 };
+			
+	// Persue player if close enough
+	if( inRect( undeadArea, map_ref->getPlayerGuy()->x, map_ref->getPlayerGuy()->y ) && (map_ref->getPlayerGuy()->health > 0) ){
+		
+		// does player have fresh garlic in their pocket?
+		Entity* checkGarlic = map_ref->getPlayerGuy()->checkInventory( ENTITY_TYPES::Garlic );
+		if( checkGarlic != nullptr ){
+			result = UNDEAD_FLAGS_FLEE;
+		} else {
+			result = UNDEAD_FLAGS_PERSUE;	
+		}
+	}
+		
+	// Change state to flee if any garlic is in rect
+	for( int i = 0; i < map_ref->entities.size(); ++i ){
+		Entity* e = &map_ref->entities[i];
+		if( e->getType() == ENTITY_TYPES::Garlic ){
+			if( inRect( undeadArea, e->x, e->y ) ){
+				result = UNDEAD_FLAGS_FLEE;
+				undead->flagsParam2 = e->x;
+				undead->flagsParam3 = e->y;
+			}
+		}
+	}
+	
+	// Lastly, make Undead dormant if it's daytime
+	if( !isNightTime ){
+		result = UNDEAD_FLAGS_DORMANT;
+		undead->tileset_x = 272;
+		undead->tileset_y = 0;
+	}
+	else {
+		undead->tileset_x = 208;
+		undead->tileset_y = 0;
+	}
+	
+	// Here, we should have one of three results: Wander, Persue, or Flee
+	// set the flag to the Undead pointer, and also return the flag value
+	undead->flags = result;
+	
+	return result;
+}
+
+
+
 
 void moveUndead( Entity* undead, int directionFlags ){
 	MapTile* t = nullptr;
@@ -151,9 +193,56 @@ void moveUndead( Entity* undead, int directionFlags ){
 			attackTile( map_ref, undead, t );
 		}
 		
+		// Attack the player!!
+		if( t->hasEntity() ){
+			
+			Entity* tempEnt = (Entity*)t->getEntity();
+			
+			if( tempEnt->getType() == ENTITY_TYPES::PlayerGuy )
+				attackTile( map_ref, undead, t );
+				
+		}
+		
 		undead->flagsParam1 = 5;
 	}
 }
+
+
+
+
+void undeadFlee( Entity* undead, int directionFlags ){
+	int distanceX = abs( undead->x - undead->flagsParam2 );
+	int distanceY = abs( undead->y - undead->flagsParam3 );
+	
+	int whichWay = UNDEAD_WALK_DWELL;
+	
+	// Move away from whichever distance is shorter
+	if( distanceX < distanceY ){ // move horizontally
+		if( undead->flagsParam2 < undead->x )
+			whichWay = UNDEAD_WALK_RIGHT;
+		else
+			whichWay = UNDEAD_WALK_LEFT;
+	}
+	else { // move vertically
+		if( undead->flagsParam3 < undead->y )
+			whichWay = UNDEAD_WALK_DOWN;
+		else
+			whichWay = UNDEAD_WALK_UP;
+	}
+	
+	// flagsParam1 has value greater than 0 whenever Undead bumps into a blockable tile
+	if( undead->flagsParam1 > 0 ){
+		whichWay = directionFlags;
+		undead->flagsParam1--;
+		if( undead->flagsParam1 < 0 )
+			undead->flagsParam1 = 0;
+	}
+	
+	moveUndead( undead, whichWay );
+}
+
+
+
 
 void persuePlayer( Entity* undead, int directionFlags ){
 	Entity* p = map_ref->getPlayerGuy();
@@ -188,6 +277,9 @@ void persuePlayer( Entity* undead, int directionFlags ){
 	moveUndead( undead, whichWay );
 }
 
+
+
+
 void setUndeadTime( unsigned int currentTime, unsigned int maxTime ){
 	// considering a value of maxTime == midnight
 	
@@ -195,16 +287,24 @@ void setUndeadTime( unsigned int currentTime, unsigned int maxTime ){
 	int eighthTime = quarterTime / 2;
 	
 	if( (currentTime <= quarterTime) || (maxTime-currentTime <= quarterTime) ){
-	
-	
+		
+		// Night becomes day
+		if( isNightTime == true ){
+			plantGarlic( map_ref, 3 );
+			dropApples( map_ref, 3 );
+			playMusic( MUSIC::Day1 );
+			
+		}
 		isNightTime = false;	
 	}
 	else {
 		
-		// spawn more undead if becoming nighttime
+		// Day becomes night
 		if( isNightTime == false ){
 			spawnNewUndead( map_ref, 20 );
 			addQueueMessage( "The dead are rising..." );
+			playMusic( MUSIC::Night1 );
+			
 		}
 		isNightTime = true;	
 	}

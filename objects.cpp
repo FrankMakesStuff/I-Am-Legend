@@ -56,6 +56,7 @@ void MapTile::setToGrass(){
 	this->tileset_y = 0;
 	this->tileset_x = ( rand() % NUM_GRASS_TILES ) * TILEWIDTH;
 	this->baseType = BASE_TYPES::Grass;
+	this->health = 90;
 	
 	return;
 }
@@ -102,7 +103,27 @@ void MapTile::setType( BASE_TYPES type ){
 			this->baseType = type;
 			this->tileset_x = 160;
 			this->tileset_y = 0;
+			this->health = 150;
 			break;
+			
+		case BASE_TYPES::GarlicFlower:
+			this->baseType = type;
+			this->tileset_x = 320;
+			this->tileset_y = 0;
+			this->health = 30;
+			break;
+			
+		case BASE_TYPES::Void:
+			this->baseType = type;
+			this->tileset_x = 16;
+			this->tileset_y = 16;
+			break;
+			
+		case BASE_TYPES::Dirt:
+			this->baseType = type;
+			this->tileset_x = 400;
+			this->tileset_y = 0;
+			this->health = 50000;
 		
 		default:
 			break;
@@ -162,6 +183,14 @@ std::string MapTile::toString(){
 		case BASE_TYPES::Door:
 			typeString = "a door";
 			break;
+			
+		case BASE_TYPES::Rubble:
+			typeString = "rubble";
+			break;
+			
+		case BASE_TYPES::GarlicFlower:
+			typeString = "a garlic blossom";
+			break;
 
 		default:
 			typeString = "[undefined BASE_TYPE" + std::to_string((int)this->baseType) + "]";
@@ -174,73 +203,55 @@ std::string MapTile::toString(){
 ////////////////////////////////////
 // Entity
 ////////////////////////////////////
-Entity::Entity( int x, int y, ENTITY_TYPES type, MapTile* currentTile ){
-	this->x = x;
-	this->y = y;
+Entity::Entity( ENTITY_TYPES type, MapTile* currentTile ){
+	this->x = currentTile->x;
+	this->y = currentTile->y;
 	this->currentTile = currentTile;
 	this->baseType = BASE_TYPES::Entity;
-	this->facing = DIRECTION::East;
+	this->facing = DIRECTION::South;
 	this->index = -1; // non-assigned entity, until it is put into the map
+	this->currentlySelectedInventory = -1;
+	this->flags = 0;
+	this->flagsParam1 = 0;
+	this->flagsParam2 = 0;
+	this->flagsParam3 = 0;
+	this->count = 1;
 	
-	switch( type ){
-		case ENTITY_TYPES::PlayerGuy:
-			this->health = 100;
-			this->strength = 10;	// bare fist strength - unequipped
-			this->entityType = type;
-			this->tileset_x = 96;
-			this->tileset_y = 0;
-			this->drawable = true;
-			break;
-			
-		case ENTITY_TYPES::TreeBuilder:
-			this->health = 50;
-			this->strength = 5000;
-			this->entityType = type;
-			this->tileset_x = 224;
-			this->tileset_y = 0;
-			this->drawable = false;
-			break;
-			
-		case ENTITY_TYPES::Key:
-			this->health = 999999;
-			this->strength = 5;
-			this->entityType = type;
-			this->tileset_x = 240;
-			this->tileset_y = 0;
-			this->drawable = true;
-			this->flags = ENTITY_FLAGS_OBTAINABLE;
-			break;
-			
-		case ENTITY_TYPES::LockableBarrier:
-			this->health = 999999;
-			this->strength = 9000;
-			this->entityType = type;
-			this->tileset_x = -1;
-			this->tileset_y = -1;
-			this->drawable = false;
-			this->flags = ENTITY_FLAGS_LOCKED;
-			break;
-		
-		// Undead
-		case ENTITY_TYPES::Undead:
-			this->health = 50;
-			this->strength = 10;
-			this->entityType = type;
-			this->tileset_x = 208;
-			this->tileset_y = 0;
-			this->drawable = true;
-			this->flags = UNDEAD_FLAGS_WANDER;
-			this->flagsParam1 = 0;
-			this->flagsParam2 = 0;
-		
-		default:
-			break;
-	}
+	this->setType( type );
 }
 
 Entity::Entity(){
-	this->entityType = ENTITY_TYPES::Undefined;
-	this->drawable = false;
+	this->x = 0;
+	this->y = 0;
+	this->currentTile = nullptr;
+	this->baseType = BASE_TYPES::Entity;
+	this->facing = DIRECTION::South;
+	this->index = -1; // non-assigned entity, until it is put into the map
+	this->currentlySelectedInventory = -1;
+	this->flags = 0;
+	this->flagsParam1 = 0;
+	this->flagsParam2 = 0;
+	this->flagsParam3 = 0;
+	this->count = 1;
+	
+	this->setType( ENTITY_TYPES::Undefined );
+}
+
+Entity::Entity( ENTITY_TYPES type ){
+	this->x = 0;
+	this->y = 0;
+	this->currentTile = nullptr;
+	this->baseType = BASE_TYPES::Entity;
+	this->facing = DIRECTION::South;
+	this->index = -1; // non-assigned entity, until it is put into the map
+	this->currentlySelectedInventory = -1;
+	this->flags = 0;
+	this->flagsParam1 = 0;
+	this->flagsParam2 = 0;
+	this->flagsParam3 = 0;
+	this->count = 1;
+	
+	this->setType( type );
 }
 
 Entity::~Entity(){
@@ -252,7 +263,173 @@ ENTITY_TYPES Entity::getType(){
 }
 
 void Entity::setType( ENTITY_TYPES type ){
+	
 	this->entityType = type;
+	
+	switch( type ){
+		case ENTITY_TYPES::PlayerGuy:
+			this->health = 100;
+			this->strength = 5;	// bare fist strength - unequipped
+			this->tileset_x = 0;
+			this->tileset_y = 32;
+			this->facing = DIRECTION::South;
+			this->drawable = true;
+			this->count = 1;
+			break;
+			
+		case ENTITY_TYPES::TreeBuilder:
+			this->health = 500;
+			this->strength = 5000;
+			this->tileset_x = 224;
+			this->tileset_y = 0;
+			this->drawable = false;
+			this->count = 1;
+		break;
+			
+		case ENTITY_TYPES::Key:
+			this->health = 999999; // there should be node code that exists that would allow destruction of a key
+			this->strength = 5;
+			this->tileset_x = 240;
+			this->tileset_y = 0;
+			this->drawable = true;
+			this->flags = ENTITY_FLAGS_OBTAINABLE;
+			this->count = 1;
+		break;
+			
+		case ENTITY_TYPES::LockableBarrier:
+			this->health = 2000;	// An axe could break it open
+			this->strength = 9000;
+			this->tileset_x = -1;
+			this->tileset_y = -1;
+			this->drawable = false;
+			this->flags = ENTITY_FLAGS_LOCKED;
+			this->count = 1;
+		break;
+		
+		// Undead
+		case ENTITY_TYPES::Undead:
+			this->health = 100;
+			this->strength = 7;
+			this->tileset_x = 208;
+			this->tileset_y = 0;
+			this->drawable = true;
+			this->flags = UNDEAD_FLAGS_WANDER;
+			this->flagsParam1 = 0;
+			this->flagsParam2 = 0;
+			this->count = 1;
+		break;
+			
+		// Axe
+		case ENTITY_TYPES::Axe:
+			this->health = 1000;
+			this->strength = 50;
+			this->tileset_x = 288;
+			this->tileset_y = 0;
+			this->drawable = true;
+			this->flags = ENTITY_FLAGS_OBTAINABLE | ENTITY_FLAGS_WEAPON | ENTITY_FLAGS_TOOL;
+			this->flagsParam1 = 0;
+			this->flagsParam2 = 0;
+			this->count = 1;
+		break;
+		
+		// Wood
+		case ENTITY_TYPES::Wood:
+			this->health = 50;
+			this->strength = 10;
+			this->tileset_x = 352;
+			this->tileset_y = 0;
+			this->drawable = true;
+			this->flags = ENTITY_FLAGS_OBTAINABLE;
+			this->flagsParam1 = 0;
+			this->flagsParam2 = 0;
+			this->count = 1;
+		break;
+			
+		// Trowel
+		case ENTITY_TYPES::Trowel:
+			this->health = 1000;
+			this->strength = 30;
+			this->tileset_x = 336;
+			this->tileset_y = 0;
+			this->drawable = true;
+			this->flags = ENTITY_FLAGS_OBTAINABLE | ENTITY_FLAGS_TOOL;
+			this->flagsParam1 = 0;
+			this->flagsParam2 = 0;
+			this->count = 1;
+		break;
+			
+		// Garlic bulb
+		case ENTITY_TYPES::Garlic:
+			this->health = 200;	// desired seconds until rot * 5
+			this->strength = 1;
+			this->tileset_x = 368;
+			this->tileset_y = 0;
+			this->drawable = true;
+			this->flags = ENTITY_FLAGS_OBTAINABLE;
+			this->flagsParam1 = 0;
+			this->flagsParam2 = 0;
+			this->count = 1;
+		break;
+		
+		// Lathe	
+		case ENTITY_TYPES::Lathe:
+			this->health = 1000;
+			this->strength = 10;
+			this->tileset_x = 304;
+			this->tileset_y = 0;
+			this->drawable = true;
+			this->flags = ENTITY_FLAGS_TOOL;
+			this->flagsParam1 = 0;
+			this->flagsParam2 = 0;
+			this->count = 1;
+		break;
+			
+		// Wooden Stake
+		case ENTITY_TYPES::WoodenStake:
+			this->health = 100;
+			this->strength = 100;
+			this->tileset_x = 416;
+			this->tileset_y = 0;
+			this->drawable = true;
+			this->flags = ENTITY_FLAGS_WEAPON;
+			this->flagsParam1 = 0;
+			this->flagsParam2 = 0;
+			this->count = 1;
+		break;
+			
+		// Apple
+		case ENTITY_TYPES::Apple:
+			this->health = 10;
+			this->strength = 5;
+			this->tileset_x = 432;
+			this->tileset_y = 0;
+			this->drawable = true;
+			this->flags = ENTITY_FLAGS_OBTAINABLE;
+			this->flagsParam1 = 0;
+			this->flagsParam2 = 0;
+			this->flagsParam3 = 0;
+			this->count = 1;
+		break;
+		
+		// Rotten garlic
+		case ENTITY_TYPES::GarlicRotten:
+			this->health = 30;
+			this->strength = 1;
+			this->tileset_x = 384;
+			this->tileset_y = 0;
+			this->drawable = true;
+			this->flags = ENTITY_FLAGS_OBTAINABLE;
+			this->flagsParam1 = 0;
+			this->flagsParam2 = 0;
+			this->flagsParam3 = 0;
+			this->count = 1;
+		break;
+			
+			
+		default:
+		break;
+	}
+
 }
 
 int Entity::addToInventory( Entity e ){
@@ -266,7 +443,8 @@ int Entity::addToInventory( Entity e ){
 	} else {
 		for( int i = 0; i < this->inventory.size(); ++i ){
 			if( this->inventory[i].entityType == e.entityType ){ // already has item
-				this->inventory[i].count++;
+				this->inventory[i].count += e.count;
+				this->inventory[i].health = e.health;	// restore health - mostly for garlic
 				alreadyHas = true;
 				break;
 			}
@@ -282,13 +460,37 @@ int Entity::addToInventory( Entity e ){
 	
 	// At this point, one way or another, item has been added
 	// into inventory, so print a message declaring so.
-	printf( "%s picked up %s.\n", this->toString().c_str(), e.toString().c_str() );
+	printf( "%s picked up %s, ", this->toString().c_str(), e.toString().c_str() );
 	pickup_msg = this->toString() + " picked up " + e.toString() + ".";
 	addQueueMessage( pickup_msg );
 	
 	// play pickup sound (only if PlayerGuy )
-	if( this->entityType == ENTITY_TYPES::PlayerGuy )
-		playSound( SOUNDS::PickupSmall );
+	if( this->entityType == ENTITY_TYPES::PlayerGuy ){
+		
+		// determine if small-pickup or large-pickup
+		ENTITY_TYPES itemType = e.getType();
+		switch( itemType ){
+			// large powerups
+			case ENTITY_TYPES::WoodenStake:
+				playSound( SOUNDS::PickupBig );
+				
+				break;
+			
+			// regular items
+			default:
+				playSound( SOUNDS::PickupSmall );
+				break;
+		}
+		
+		int totalCount = 0;
+		for( int j = 0; j < this->inventory.size(); ++j ){
+			if( this->inventory[j].getType() == e.entityType )
+				totalCount = this->inventory[j].count;
+		}
+		
+		printf( "you now have %d total.\n", totalCount );
+	}
+		
 	
 	return this->inventory.size();
 }
@@ -310,7 +512,58 @@ void Entity::deleteFromInventory( unsigned int index ){
 	for( int i = 0; i < this->inventory.size(); ++i ){
 		this->inventory[i].index = i;
 	}
+	
+	// change index of "selected inventory"
+	if( index == this->currentlySelectedInventory ){
+		this->currentlySelectedInventory = this->inventory.size() - 1;
+	}
+	
+	// Make selection none (-1) if inventory size is now zero
+	if( this->inventory.size() == 0 )
+		this->currentlySelectedInventory = -1;
 }
+
+void Entity::nextInventory(){
+	if( this->inventory.size() == 0 )
+		return;
+		
+	this->currentlySelectedInventory++;
+	
+	if( this->currentlySelectedInventory >= this->inventory.size() )
+		this->currentlySelectedInventory = -1;
+}
+
+Entity* Entity::getSelectedInventory(){
+	Entity* e = nullptr;
+	
+	// none selected, or inventory is empty
+	if( this->currentlySelectedInventory == -1 )
+		return nullptr;
+		
+	e = &this->inventory[this->currentlySelectedInventory];
+	
+	return e;
+}
+
+Entity* Entity::checkInventory( ENTITY_TYPES type ){
+	Entity* result = nullptr;
+	
+	if( this->inventory.size() == 0 )
+		return result;
+		
+		
+	for( int i = 0; i < this->inventory.size(); ++i ){
+		
+		Entity* inv = &this->inventory[i];
+		
+		if( inv->getType() == type )
+			result = inv;
+	}
+	
+	return result;
+}
+
+
 
 bool Entity::hasMatchingKey( Entity* lock, bool deleteKey ){
 	for( int i = 0; i < this->inventory.size(); ++i ){ // scan thru the inventory
@@ -327,20 +580,120 @@ bool Entity::hasMatchingKey( Entity* lock, bool deleteKey ){
 	}
 }
 
+void Entity::faceDirection( DIRECTION dir ){
+	
+	// PlayerGuy
+	if( this->getType() == ENTITY_TYPES::PlayerGuy ){
+		switch( dir ){
+			case DIRECTION::North:
+				this->tileset_x = 16;
+				this->tileset_y = 32;
+			break;
+			
+			case DIRECTION::South:
+				this->tileset_x = 0;
+				this->tileset_y = 32;			
+			break;
+			
+			case DIRECTION::East:
+				this->tileset_x = 32;
+				this->tileset_y = 32;				
+			break;
+			
+			case DIRECTION::West:
+				this->tileset_x = 48;
+				this->tileset_y = 32;				
+			break;
+		}
+	}
+	
+	// Undead
+	if( this->getType() == ENTITY_TYPES::Undead ){
+		switch( dir ){
+			case DIRECTION::North:
+				
+			break;
+			
+			case DIRECTION::South:
+			
+			break;
+			
+			case DIRECTION::East:
+				
+			break;
+			
+			case DIRECTION::West:
+				
+			break;
+		}
+	}
+	
+	this->facing = dir;
+}
+
 
 
 // Entity Update
 void Entity::update(){
 	
+	Entity* checkGarlic = nullptr;
+	int garlicCount;
+	
 	// update according to entity type
 	switch( this->entityType ){
 		
+		// Do any updates for PlayerGuy
+		case ENTITY_TYPES::PlayerGuy:
+			// update garlic in your pocket
+			checkGarlic = this->checkInventory( ENTITY_TYPES::Garlic );
+			
+			if( checkGarlic != nullptr ){
+				
+				garlicCount = checkGarlic->count;
+				
+				checkGarlic->update();
+				
+				// If garlic became rotten after update, it must now be merged
+				// with any other rotten garlic in the inventory
+				if( checkGarlic->getType() == ENTITY_TYPES::GarlicRotten ){
+					
+					// make sure count is maintained... it gets overwritten after update() call
+					checkGarlic->count = garlicCount;
+
+					for( int i = 0; i < this->inventory.size(); ++i ){
+						
+						// if there is rotten garlic in inventory that is NOT the same as the newly rotted garlic
+						if( (this->inventory[i].entityType == ENTITY_TYPES::GarlicRotten) && (i != checkGarlic->index) ){
+							
+							// Add newly rotted garlic into old rotten garlic
+							this->inventory[i].count += checkGarlic->count;
+							
+							// Get rid of newly rotted garlic after merge
+							this->deleteFromInventory( checkGarlic->index );
+						}
+						// If no other rotten garlic exists, then 'checkGarlic' will remain as the only one
+					}
+				}
+			} 
+		break;
+		
 		case ENTITY_TYPES::Undead:
 			updateUndead( this );
-			break;
+		break;
+			
+		case ENTITY_TYPES::Garlic: // Garlic will rot over time
+			this->health--;
+			
+			// once health is gone, garlic has officially rotted, and is now useless
+			if( this->health <= 0 ){
+				this->setType( ENTITY_TYPES::GarlicRotten );
+			}	
+		break;
+		
+		
 		
 		default:
-			break;
+		break;
 	}
 	
 	
@@ -419,7 +772,12 @@ void Entity::getLookingAt( int &x, int &y ){
 }
 
 std::string Entity::toString(){
-	std::string typeString;
+	std::string typeString = "";
+	std::string amountString = "";
+	
+	if( this->count > 1 ){
+		amountString = std::to_string( this->count ) + " pieces of ";
+	}
 
 	switch( this->entityType ){
 		case ENTITY_TYPES::PlayerGuy:
@@ -444,13 +802,57 @@ std::string Entity::toString(){
 		case ENTITY_TYPES::Undead:
 			typeString = "an Undead";
 			break;
+			
+		case ENTITY_TYPES::Axe:
+			typeString = "an axe";
+			break;
+			
+		case ENTITY_TYPES::Wood:
+			typeString = "wood";
+			break;
+			
+		case ENTITY_TYPES::Trowel:
+			typeString = "a trowel";
+			break;
+			
+		case ENTITY_TYPES::Garlic:
+			typeString = "garlic";
+			break;
+			
+		case ENTITY_TYPES::GarlicRotten:
+			typeString = "rotten garlic";
+			break;
+			
+		case ENTITY_TYPES::Lathe:
+			typeString = "a lathe";
+			break;
+			
+		case ENTITY_TYPES::WoodenStake:
+			if( this->count > 1 ){
+				amountString = std::to_string( this->count );
+				typeString = " wooden stakes";
+			} else {
+				amountString = "";
+				typeString = "a wooden stake";
+			}
+			break;
+			
+		case ENTITY_TYPES::Apple:
+			if( this->count > 1 ){
+				amountString = std::to_string( this->count );
+				typeString = " apples";
+			} else {
+				amountString = "";
+				typeString = "an apple";
+			}
+			break;
 
 		default:
 			typeString = "[undefined ENTITY" + std::to_string((int)this->entityType ) + "]";
 			break;
 	}
 
-	return typeString;
+	return amountString + typeString;
 }
 
 int Entity::getIndex(){
@@ -526,6 +928,10 @@ Entity* MapSet::getPlayerGuy(){
 	return &this->entities[0];	
 }
 
+SDL_Texture* MapSet::getTilesetImage(){
+	return this->tile_image;
+}
+
 Entity* MapSet::getEntityAt( int x, int y ){
 	// return null if out of bounds
 	if( x < 0 || x >= this->szWidth ) return nullptr;
@@ -560,7 +966,7 @@ void MapSet::fillTrees( unsigned int density ){
 		x = rand() % this->szWidth;
 		y = rand() % this->szHeight;
 		if( this->getEntityAt( x, y ) == nullptr ){ // nothing there
-			Entity e( x, y, ENTITY_TYPES::TreeBuilder, this->getTileAt( x, y ));
+			Entity e( ENTITY_TYPES::TreeBuilder, this->getTileAt( x, y ));
 			this->addEntity( e );
 			treeCount++;
 		}
@@ -583,7 +989,7 @@ void MapSet::fillTrees( unsigned int density ){
 
 						// Must be grass with nothing on it
 						if( this->getEntityAt( x, y ) == nullptr && t->baseType == BASE_TYPES::Grass ){ 
-							Entity ne( x, y, ENTITY_TYPES::TreeBuilder, t );
+							Entity ne( ENTITY_TYPES::TreeBuilder, t );
 							this->addEntity( ne );
 							treeCount++;
 						}
@@ -720,7 +1126,7 @@ MapTile* MapSet::putBuilding( unsigned int left, unsigned int top, unsigned int 
 	buildingIterator++;
 	
 	// Randomly leave one boundary tile open, for a doorway
-	unsigned int DoorwayNumber = (bottom - top) + (right - left)*2;
+	unsigned int DoorwayNumber = right - left - 1;
 	DoorwayNumber = rand() % DoorwayNumber;
 	unsigned int DoorwayIterator = 0;
 	unsigned int floodFillResult = 0;
@@ -740,7 +1146,9 @@ MapTile* MapSet::putBuilding( unsigned int left, unsigned int top, unsigned int 
 			if( x == right - 1 && y == bottom - 1 ) inCorner == true;
 			
 			if( boundary ){
-				DoorwayIterator++;
+				if( y == bottom - 1 )
+					DoorwayIterator++;
+					
 				if( DoorwayIterator > DoorwayNumber && hasDoorway == false && !inCorner ){
 					// drop a door in
 					t->setType( BASE_TYPES::WoodPlanks );
@@ -748,7 +1156,7 @@ MapTile* MapSet::putBuilding( unsigned int left, unsigned int top, unsigned int 
 					hasDoorway = true;
 					
 					// add a LockableBarrier entity
-					Entity doorLock( x, y, ENTITY_TYPES::LockableBarrier, t );
+					Entity doorLock( ENTITY_TYPES::LockableBarrier, t );
 					doorLock.flagsParam1 = buildingIterator;	// unique ID for lock/key pair
 					this->addEntity( doorLock );
 
@@ -815,7 +1223,7 @@ bool MapSet::putKey( unsigned int x, unsigned int y ){
 	
 	MapTile* t = this->getTileAt( x, y );
 	
-	Entity key( x, y, ENTITY_TYPES::Key, t );
+	Entity key( ENTITY_TYPES::Key, t );
 	key.flagsParam1 = buildingIterator;
 	
 	this->addEntity( key ); 
@@ -876,7 +1284,7 @@ int MapSet::render(){
 	int x = 0; int y = 0, i = 0;
 	int offsetX, offsetY;
 	
-	setViewRect();
+	this->setViewRect();
 	offsetX = this->viewRect.x;
 	offsetY = this->viewRect.y;
 	
@@ -885,7 +1293,7 @@ int MapSet::render(){
 		for( x = this->viewRect.x; x < this->viewRect.x + this->viewRect.w; ++x ){
 			MapTile* t = getTileAt( x, y );
 			
-			drawTile( this->ren, *t, t->x - offsetX, t->y - offsetY, this->tile_image, this->zoomLevel );
+			drawTile( this->ren, *t, t->x - offsetX , t->y - offsetY, this->tile_image, this->zoomLevel );
 		}
 	}
 	
@@ -902,7 +1310,7 @@ std::string MapSet::toString(){
 
 Entity createNewPlayer( int x, int y, MapTile* tile ){
 	printf( "Creating player...\n" );
-	Entity p( x, y, ENTITY_TYPES::PlayerGuy, tile );
+	Entity p( ENTITY_TYPES::PlayerGuy, tile );
 	return p;
 }
 
@@ -917,10 +1325,15 @@ bool rectOutOfScreen( SDL_Rect r ){
 // Note: This is the only place when dealing with "screen-space" AKA pixels on-screen.
 // Every other occurence of handling positions and locations are in world-space (i.e. increments of 1, not TILEWIDTH, etc...)
 int drawTile( SDL_Renderer *ren, MapTile tile, int dst_x, int dst_y, SDL_Texture *img, unsigned char scale ){
+	
 	SDL_Rect src, dst;
+	
+	unsigned int pxlAdjX = (scale == 1) ? 3 : 11;	
+	
 	dst.w = TILEWIDTH * scale;
 	dst.h = TILEHEIGHT * scale;
 	dst.x = dst_x * TILEWIDTH * scale;
+	dst.x += pxlAdjX;
 	dst.y = dst_y * TILEHEIGHT * scale;
 	
 	src.x = tile.tileset_x;
@@ -1136,11 +1549,20 @@ bool moveEntity( MapSet* map, Entity* e, int x, int y ){
 		// perform actions that only a player can do
 		if( isPlayerGuy ){
 			
-			// can we pick it up?
-			if( (newTileEntity->flags & ENTITY_FLAGS_OBTAINABLE) == ENTITY_FLAGS_OBTAINABLE ){
-				Entity entityCopy = *newTileEntity; // copy the data in the entity
-				map->deleteEntity( newTileEntity->index ); // remove entity from the map's list of entities
-				e->addToInventory( entityCopy ); // put the entity in the player's inventory
+			// can we pick it up? (As long as it's not an Undead, whose FLEE flag == OBTAINABLE flag)
+			if( ((newTileEntity->flags & ENTITY_FLAGS_OBTAINABLE) == ENTITY_FLAGS_OBTAINABLE) && newTileEntity->getType() != ENTITY_TYPES::Undead ){
+				Entity entityCopy = *newTileEntity; // Create a new Entity object and copy data to it
+				
+				// if it's rotten garlic, just play squish sound and don't add to inventory
+				if( entityCopy.getType() == ENTITY_TYPES::GarlicRotten ){
+					playSound( SOUNDS::Squish );
+				} else {
+					e->addToInventory( entityCopy ); // put the entity in the player's inventory
+				}
+				
+				// REMEMBER: Delete should always be the last operation, especially when using *pointers!!!!
+				map->deleteEntity( newTileEntity->index ); // remove old entity from the map's list of entities
+			
 				validMovement = true; // Now that the tile is empty, we can move the player onto it
 			}
 			
@@ -1157,11 +1579,6 @@ bool moveEntity( MapSet* map, Entity* e, int x, int y ){
 			// Actions of moving entities reacting to existing entities on tiles go here.
 			// (Should Undead pick up keys? should squirrels pick up objects? etc...)
 			// Otherwise, validMovement is FALSE here
-			
-			// check to see if newTileEntity == PlayerGuy, and if entity being moved
-			// is obtainable, in which case, add moving Entity to PlayerGuy inventory,
-			// otherwise, validMovement is FALSE (which lets other moving entities (undead, etc)
-			// perform their own handling on what to do
 		}
 	}
 	// else, tile has no entity, so just check tile properties
@@ -1178,14 +1595,17 @@ bool moveEntity( MapSet* map, Entity* e, int x, int y ){
 		if( tileNew->baseType == BASE_TYPES::Rubble )
 			validMovement = true;
 			
+		// Anyone can walk over a garlic flower
+		if( tileNew->baseType == BASE_TYPES::GarlicFlower )
+			validMovement = true;
+			
+		// movement over dirt
+		if( tileNew->baseType == BASE_TYPES::Dirt )
+			validMovement = true;
+			
 		// PlayerGuy can move thru unlocked doors (Will be blocked by LockableBarrier above)
 		if( (tileNew->baseType == BASE_TYPES::Door) && isPlayerGuy )
 			validMovement = true;
-			
-		if( isBlockable( tileNew )){
-			// Do something here if entity needs feedback for Blockable tiles
-			// (Should they attempt to knock it down/destroy it?)
-		}
 	}
 	
 	// Perform movement if allowed
@@ -1208,8 +1628,16 @@ bool moveEntity( MapSet* map, Entity* e, int x, int y ){
 		switch( tileNew->baseType ){
 			case BASE_TYPES::Door:
 				playSound( SOUNDS::Door );
+			break;
+			
+			
 			default:
-				break;
+				// Play footsteps for player
+				if( e->getType() == ENTITY_TYPES::PlayerGuy )
+					//playSound( SOUNDS::Footstep );
+					
+					
+			break;
 		}
 	}
 	
@@ -1225,129 +1653,381 @@ bool attackTile( MapSet* map, Entity* attacker, MapTile* tile ){
 	bool doHarm = false;
 	bool attackerIsPlayerGuy = ( attacker == map->getPlayerGuy() );
 	
-	// what type of tile is being attacked?
+	// Disregard if tile is invalid space (out-of-bounds, etc.)
+	if( isValidTile( tile ) == false ){
+		return false;
+	}
+	
+	
+	// Is player using a "quick item" from inventory? (Food, power-ups, etc...)
+	// (Disregard 'tile' in this case)
+	if( attacker->owner == map->getPlayerGuy() ){
+		switch( attacker->getType() ){
+			
+			case ENTITY_TYPES::Apple:
+				if( map->getPlayerGuy()->health < 100 ){
+					map->getPlayerGuy()->health += attacker->strength;
+					
+					if( map->getPlayerGuy()->health > 100 )
+						map->getPlayerGuy()->health = 100;
+				
+					attacker->count--;
+					if( attacker->count <= 0 ){
+						attacker->owner->deleteFromInventory( attacker->index );
+					}
+				}
+			break;
+			
+			default:
+			break;
+		}
+	}
+	
+	
+	// Get the 'type' of the 'attacker'
+	ENTITY_TYPES attackerType = attacker->getType();
+	
+	// Decide what to do, based on target tile's type
 	switch( tile->baseType ){
 		
-		// Perform action on a tree
+		// Tree
 		case BASE_TYPES::Tree:
 			
-			// if 'attacker' is a chainsaw,
-			// first check if PlayerGuy has fuel, and if so,
-			// decrement fuel 'count' and perform attack using chainsaw,
-			// if not, do nothing (chainsaw fuel is empty.)
-			
+			// Literally ANYTHING can chop down a tree (which is just silly)
 			tile->health -= attacker->strength;
 			
-			// is it killed?
+			// Has tree been chopped down?
 			if( tile->health <= 0 ){
 				playSound( SOUNDS::Destroy );			// sound for destroying tree
 				tile->setToGrass();						// tree gone, make grass
 				tile->isPlayerspace = false;       		// ensure it isn't playerspace (yet!) for proper floodfill
 				doFloodFill( map, tile->x, tile->y );	// recalculate playerspace
+				
+				// Add Wood entity x3 where tree once was
+				Entity newWood( ENTITY_TYPES::Wood, tile );
+				newWood.count = 3;
+				map->addEntity( newWood );
+				
 				isDeath = true;
-			}
-			else {
-				playSound( SOUNDS::Attack );
+			} else {
+				// Play different sounds depending on what is attacking
+				if( (attacker->flags & ENTITY_FLAGS_TOOL) == ENTITY_FLAGS_TOOL ){ // the right tool for the job
+					playSound( SOUNDS::BigAttack );
+				} else { // play wimpy sound
+					playSound( SOUNDS::Attack );
+				}
 			}
 			break;
-			
-		// Wall destruction
+		
+		
+		// Wall
 		case BASE_TYPES::Wall:
 			
-			if( attackerIsPlayerGuy ){
-				// If Player has selected "wood" from inventory,
-				// add health to wall and subtract Wood from inventory
-			} else {
-				tile->health -= attacker->strength;
-				playSound( SOUNDS::Attack );
+			// determine what to do, based on 'attacker' type
+			switch( attackerType ){
+				case ENTITY_TYPES::Wood:
+					
+					// Is there enough wood to repair the wall?
+					if( attacker->count >= 5 && tile->health < 150 ){
+						tile->health = 150;
+						
+						playSound( SOUNDS::Repair );
+						
+						attacker->count -= 5;
+						if( attacker->count <= 0 )
+							attacker->owner->deleteFromInventory( attacker->index );
+					}
+					break;
+				
+				// put other types of entities here, for special actions
+				
+				// otherwise, DEFAULT
+				default:
+					tile->health -= attacker->strength;
+					
+					if( (attacker->flags & ENTITY_FLAGS_TOOL) == ENTITY_FLAGS_TOOL ){ // the right tool for the job
+						playSound( SOUNDS::BigAttack );
+					} else { // play wimpy sound
+						playSound( SOUNDS::Attack );
+					}
+					
+					break;
 			}
 			
-			// Change wall appearance based on health points
-			if( tile->health < 100 ){	// a few cracks
-				tile->tileset_x = 128;
-				tile->tileset_y = 0;
-			}
- 
-			if( tile->health < 50 ){	// severely cracked
-				tile->tileset_x = 144;
-				tile->tileset_y = 0;
-			}
-			
+			// react to 'wall' destruction (note: the order of the following if/else statement
+			// is important for proper tile rendering purposes.) 
 			if( tile->health <= 0 ){	// completely destroyed (and no longer blockable)
-				tile->tileset_x = 160;
-				tile->tileset_y = 0;
 				tile->setType( BASE_TYPES::Rubble );
 				playSound( SOUNDS::Destroy );
 				isDeath = true;
+			} else if( tile->health < 70 ){	// severely cracked
+				tile->tileset_x = 144;
+				tile->tileset_y = 0;
+			} else if( tile->health < 150 ){	// a few cracks
+				tile->tileset_x = 128;
+				tile->tileset_y = 0;
+			} else { // no damage
+				tile->tileset_x = 112;
+				tile->tileset_y = 0; 
 			}
-			break;
+			
+			break; // type:wall
 		
-		// attack anything on non-blockable tiles (do not BREAK, just go to DEFAULT:)
+		//////////////////////////////////////
+		// The following are all non-Blockable tiles, and should all do the same 'default' action (do not 'break' from case)
+		// However, encapsulate specific and unique action per each using an 'if' statement, see below
+		
+		// Grass
 		case BASE_TYPES::Grass:
-			// Check entity type of "attacker", perform action as necessary.
-			// (i.e., if attacker==wood with a "count" of at least 5, build a wall
-			// and decrement "count" by 5.
-		
-		case BASE_TYPES::GarlicFlower:
-			// If "attacker" == trowel, harvest garlic
-			// Create new Garlic entity, transform Tile into Grass,
-			// and give it the Garlic entity for player to acquire
-		case BASE_TYPES::Rubble:
-			if( attackerIsPlayerGuy ){
-				// if "wood" is selected in inventory
-				// then subtract an amount and use
-				// tile->setType() to change back to Wall
+			// If grass has no entity above it, do a digging action if 'attacker' is a trowel
+			if( (tile->baseType == BASE_TYPES::Grass) && !tile->hasEntity() && (attacker->getType() == ENTITY_TYPES::Trowel) ){
+				tile->health -= attacker->strength;
+				
+				if( tile->health <= 0 ){
+					tile->setType( BASE_TYPES::Dirt );
+					tile->isPlayerspace = true;
+				}
+				
+				playSound( SOUNDS::Dig );
 			}
+		
+		// Garlic Flower
+		case BASE_TYPES::GarlicFlower:
+			// harvest garlic if no entity
+			if( (tile->baseType == BASE_TYPES::GarlicFlower) && !tile->hasEntity() && (attackerIsPlayerGuy || (attacker->getType() == ENTITY_TYPES::Trowel)) ){
+				tile->health -= attacker->strength;
+				
+				if( tile->health <= 0 ){	// spawn a garlic bulb
+					tile->setToGrass();
+					tile->isPlayerspace = true;
+					
+					Entity newGarlic( ENTITY_TYPES::Garlic, tile );
+					map->addEntity( newGarlic );
+					
+					// Play a harvesting sound
+					playSound( SOUNDS::Harvest );
+					
+					isDeath = true;
+				} else {	// just do a digging sound
+					playSound( SOUNDS::Dig );
+				}
+			}
+			
+		// Wall rubble
+		case BASE_TYPES::Rubble:
+			// Dig rubble and turn into dirt
+			if( (tile->baseType == BASE_TYPES::Rubble) && !tile->hasEntity() && (attacker->getType() == ENTITY_TYPES::Trowel) ){
+				tile->health -= attacker->strength;
+				
+				if( tile->health <=0 ){
+					tile->setType( BASE_TYPES::Dirt );
+					tile->isPlayerspace = true;
+				}
+				
+				playSound( SOUNDS::Dig );
+			}
+		
+		
 		case BASE_TYPES::Door:
 		case BASE_TYPES::WoodPlanks:
 		
-		// Default: just do this for most tiles (above)
+		
+		// Default action:
+		// The common action for all non-Blockable tile types.
 		default:
+
+			// Do something to entity sitting on tile
 			if( tile->hasEntity() ){
 				Entity* e = (Entity*)tile->getEntity();
 				
 				// Decide what to do for each type of entity
-				ENTITY_TYPES eType = e->getType();
-				switch( eType ){
-					case ENTITY_TYPES::PlayerGuy:	// player
-						doHarm = true;
+				switch( e->getType() ){
+					
+					// PlayerGuy
+					case ENTITY_TYPES::PlayerGuy:
+						if( e->health > 0 )
+							doHarm = true;
+					break;
+					
+					
+					// Undead	
+					case ENTITY_TYPES::Undead:
+						// Only thing that can re-kill the dead is a wooden stake through the heart!!!
+						if( attacker->getType() == ENTITY_TYPES::WoodenStake ){
+							doHarm = true;
+						}	
+					break;
 						
-						break;
-					case ENTITY_TYPES::Undead:	// undead
-						doHarm = true;
-						
-						break;
-						
-					// for other types, perform whatever specific action is needed
-					// i.e., create Wooden Stakes with a Lathe
+					
+					// Using Lathe
 					case ENTITY_TYPES::Lathe:
-						// if 'attacker' is wood,
-						// as long as count > 0,
-						// subtract one wood, create entity Wooden Stake,
-						// and "moveEntity()" same tile as "attacker" to perform
-						// automatic inventory acquire
-						break;
+						if( attackerType == ENTITY_TYPES::Wood ){
+							if( attacker->count > 0 ){
+								
+								// Handle 'wood' inventory first (avoid pointer errors)
+								attacker->count--;
+								if( attacker->count <= 0 ){
+									attacker->owner->deleteFromInventory( attacker->index );
+								}
+								
+								// Put a wooden stake into the inventory
+								Entity newStake;
+								newStake.setType( ENTITY_TYPES::WoodenStake );
+								newStake.count = 1;
+								newStake.tileset_x = 416;
+								newStake.tileset_y = 0;
+								newStake.strength = 100; // Undead health is 100
+								newStake.flags = ENTITY_FLAGS_POWERUP;
+								attacker->owner->addToInventory( newStake );
+							}
+						}
+					break;
 				}
 				
+				
+				// Should attacked entity take damage?
 				if( doHarm ){
 					e->health -= attacker->strength;
-				
-					if( e->health <= 0 ){
-						map->deleteEntity( e->index );
-						playSound( SOUNDS::Destroy );
-						isDeath = true;
+					
+					// After 'attacker*' is used, we can get rid of it
+					if( attacker->getType() == ENTITY_TYPES::WoodenStake ){
+						// Eliminate one wooden stake
+						attacker->count--;
+						if( attacker->count <= 0 ){
+							attacker->owner->deleteFromInventory( attacker->index );
+						}
 					}
+				
+					// Is it dead?
+					if( e->health <= 0 ){
+						
+						// determine what to do, based on killed entity
+						switch( e->getType() ){
+							case ENTITY_TYPES::PlayerGuy:
+								if( e->health < 0 )
+									
+									e->health = 0;
+									e->tileset_x = 96;
+									e->tileset_y = 0;
+									e->flags = ENTITY_FLAGS_DEAD;
+									
+									playSound( SOUNDS::Playerdeath );
+									
+								// DO GAME-OVER HERE
+								
+								break;
+								
+							case ENTITY_TYPES::Undead:
+								map->deleteEntity( e->index );
+								playSound( SOUNDS::UndeadKill );
+								isDeath = true;
+								break;
+								
+							default:
+								map->deleteEntity( e->index );
+								playSound( SOUNDS::Destroy );
+								isDeath = true;
+								break;
+						}
+					}
+					
 					else {
+						// Attacked entity is not dead yet
 						playSound( SOUNDS::Attack );
 					}
+				} // end "doHarm" if
+			
+			} 
+			else { 
+			//////////////////////////////////////////////////////////////////////////
+			// else no entity exists on this tile
+			
+				// Are we building a wall here?
+				if( attacker->getType() == ENTITY_TYPES::Wood ){
+					if( attacker->count >= 10 ){
+						tile->setType( BASE_TYPES::Wall );
+						
+						playSound( SOUNDS::Repair );
+						
+						// subtract, and remove from inventory if necessary
+						attacker->count -= 10;
+						if( attacker->count <= 0 )
+							attacker->owner->deleteFromInventory( attacker->index );
+					}
 				}
-			}		
-	}
+				
+				// Are we throwing garlic here?
+				if( (attacker->getType() == ENTITY_TYPES::Garlic) || (attacker->getType() == ENTITY_TYPES::GarlicRotten) ){
+					Entity getGarlic = *attacker; // Copy garlic into new entity
+					// update entity attributes before putting back into mapworld
+					getGarlic.x = tile->x;
+					getGarlic.y = tile->y;
+					getGarlic.count = 1;
+					getGarlic.setCurrentTile( tile );
+					tile->addEntity( &getGarlic );
+					map->addEntity( getGarlic );
+					
+					// remove inventory item
+					attacker->count--;
+					if( attacker->count <= 0 )
+						attacker->owner->deleteFromInventory( attacker->index );
+						
+					playSound( SOUNDS::Throw );
+				}
+			}
+		break;		
+	}// end "tile type" switch
 	
 	
 	return isDeath;
 }
 
+bool isValidTile( MapTile* t ){
+	if( t == nullptr ){
+		return false;
+	} else {
+		return true;
+	}
+}
+
+void plantGarlic( MapSet* map, unsigned int amount ){
+	int maxX = map->getWidth();
+	int maxY = map->getHeight();
+	int x, y;
+	MapTile* t;
+	
+	int planted = 0;
+	while( planted < amount ){
+		x = rand() % maxX;
+		y = rand() % maxY;
+		t = map->getTileAt( x, y );
+		if( t->baseType == BASE_TYPES::Grass & !t->hasEntity() ){ // plant garlic!
+			t->setType( BASE_TYPES::GarlicFlower );
+			planted++;
+		}
+	}
+	
+	return;
+}
+
+void dropApples( MapSet* map, unsigned int amount ){
+	for( int y = 0; y < map->getHeight(); ++y ){
+		for( int x = 0; x < map->getWidth(); ++x ){
+			
+			MapTile* t = map->getTileAt( x, y );
+			// apples only fall on grass, if the tile above is a tree
+			if( (t->baseType == BASE_TYPES::Grass) && (y > 0) ){
+				if( map->getTileAt( x, y - 1 )->baseType == BASE_TYPES::Tree ){
+					int fallChance = rand() % 100;
+					if( fallChance < amount ){
+						Entity newApple( ENTITY_TYPES::Apple, t );
+						map->addEntity( newApple );
+					}
+				}
+			}
+		}
+	}
+}
 
 
 
