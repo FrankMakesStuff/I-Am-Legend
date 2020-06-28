@@ -291,7 +291,7 @@ void setUndeadTime( unsigned int currentTime, unsigned int maxTime ){
 		// Night becomes day
 		if( isNightTime == true ){
 			plantGarlic( map_ref, 3 );
-			dropApples( map_ref, 3 );
+			dropApples( map_ref, 15 );
 			playMusic( MUSIC::Day1 );
 			
 		}

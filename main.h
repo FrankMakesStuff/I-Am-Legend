@@ -10,8 +10,8 @@
 #define WINDOW_TOP 64
 #define WINDOW_TITLE "I Am Legend"
 
-#define MAP_DEFAULT_WIDTH 200
-#define MAP_DEFAULT_HEIGHT 200
+#define MAP_DEFAULT_WIDTH 400
+#define MAP_DEFAULT_HEIGHT 400
 
 
 #include <stdlib.h>

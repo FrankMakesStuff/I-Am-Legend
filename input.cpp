@@ -1,6 +1,15 @@
 #include "input.h"
 
 bool isSpacebarHeld = false;
+bool requestToQuit = false;
+
+void requestQuit() {
+	requestToQuit = true;
+}
+
+bool getQuit(){
+	return requestToQuit;
+}
 
 PLAYERACTION getPlayerAction(){
 	/* NOTE: Examine funcion SDL_PumpEvents() to force event loop to update if keyboard state is acting weird.

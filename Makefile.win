@@ -5,8 +5,8 @@ CPP      = g++.exe
 CC       = gcc.exe
 WINDRES  = windres.exe
 RES      = I_Am_Legend_private.res
-OBJ      = main.o text.o vividConsole.o objects.o graphics.o input.o sound.o undead.o $(RES)
-LINKOBJ  = main.o text.o vividConsole.o objects.o graphics.o input.o sound.o undead.o $(RES)
+OBJ      = main.o text.o vividConsole.o objects.o graphics.o input.o sound.o undead.o roads.o $(RES)
+LINKOBJ  = main.o text.o vividConsole.o objects.o graphics.o input.o sound.o undead.o roads.o $(RES)
 LIBS     = -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib" -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/lib" -L"C:/Users/Frank/GitStuff/I_Am_Dwarf" -lSDL2main  -lSDL2  -lSDL2_image  -lSDL2_mixer
 INCS     = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include"
 CXXINCS  = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include/c++"
@@ -48,6 +48,9 @@ sound.o: sound.cpp
 
 undead.o: undead.cpp
 	$(CPP) -c undead.cpp -o undead.o $(CXXFLAGS)
+
+roads.o: roads.cpp
+	$(CPP) -c roads.cpp -o roads.o $(CXXFLAGS)
 
 I_Am_Legend_private.res: I_Am_Legend_private.rc 
 	$(WINDRES) -i I_Am_Legend_private.rc --input-format=rc -o I_Am_Legend_private.res -O coff 

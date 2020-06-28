@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 	
 	// Create a new world
 	// (NOTE: This will be what happens when player selects "Start New Game")
-	generateNewWorld( MAP_DEFAULT_WIDTH, MAP_DEFAULT_HEIGHT );
+	generateNewWorld( 800, 800 );
 	
 	// Enter game as: (GameMode, Menu, Inventory, etc...)
 	gameState = GAMESTATE::GameMode;
@@ -55,6 +55,11 @@ int main(int argc, char** argv) {
 	// main loop
 	log.print( "Let's begin!" );
 	while( !quit ){
+		
+		if( getQuit() ){
+			quit == true;
+			break;
+		}
 		
 		// Get a snapshot of time
 		lastTick = currentTick;
@@ -136,6 +141,14 @@ int main(int argc, char** argv) {
 void generateNewWorld(unsigned int mapWidth, unsigned int mapHeight){
 	
 	unsigned int treeDensity = (mapWidth * mapHeight) / 1000;
+	unsigned int mapCenterX = mapWidth / 2;
+	unsigned int mapCenterY = mapHeight / 2;
+	unsigned int houseWidth = 10;
+	unsigned int houseHeight = 8;
+	
+	unsigned int houseLeft = mapCenterX - 30;
+	unsigned int houseTop = mapCenterY - 11;
+	
 	bool goodPlayerspace = false;
 	unsigned int validSpace = 0;
 	MapTile* atDoorstep;
@@ -154,9 +167,12 @@ void generateNewWorld(unsigned int mapWidth, unsigned int mapHeight){
 		// next, plant all trees
 		map.fillTrees( treeDensity );
 		
+		// put streets
+		buildRoads( &map, 600, 600, 50 );
+		
 		// Add a building, and see if playerspace is greater than a threshold - too low means trees are blocking much of the gameworld
-		atDoorstep = map.putBuilding( 95, 95, 105, 105 );
-		printf( "Scanning for player access (player-space)...\n" );
+		atDoorstep = map.putBuilding( houseLeft, houseTop, houseLeft + houseWidth, houseTop + houseHeight );
+		printf( "Discovering path nodes...\n" );
 		validSpace = doFloodFill( &map, atDoorstep->x, atDoorstep->y );
 		printf( "Found %s tiles of valid player-space.\n", getPrettyNumber( validSpace ).c_str() );
 		if( validSpace > 10000 ){
@@ -170,16 +186,16 @@ void generateNewWorld(unsigned int mapWidth, unsigned int mapHeight){
 	//Here, the world is deemed acceptable to proceed.
 	//////////////////////////////////////////////////
 	
-	// put an axe outside the house on the top-right
-	Entity newAxe( ENTITY_TYPES::Axe, map.getTileAt( 105, 95 ) );
+	// put an axe
+	Entity newAxe( ENTITY_TYPES::Axe, map.getTileAt( atDoorstep->x - 1, atDoorstep->y ) );
 	map.addEntity( newAxe );
 	
-	// put a trowel outside the house at the bottom-left
-	Entity newTrowel( ENTITY_TYPES::Trowel, map.getTileAt( 94, 104 ) );
+	// put a trowel
+	Entity newTrowel( ENTITY_TYPES::Trowel, map.getTileAt( atDoorstep->x + 1, atDoorstep->y ) );
 	map.addEntity( newTrowel ); 
 	 
 	// Place a Lathe in the top-right corner
-	Entity newLathe( ENTITY_TYPES::Lathe, map.getTileAt( 100, 97 ));
+	Entity newLathe( ENTITY_TYPES::Lathe, map.getTileAt( houseLeft + houseWidth - 2, houseTop + 1 ));
 	map.addEntity( newLathe );
 	
 	// plant some garlic
@@ -188,8 +204,13 @@ void generateNewWorld(unsigned int mapWidth, unsigned int mapHeight){
 	 //Generate Undead
 	spawnNewUndead( &map, 50 );
 	
+	// Move player into house
+	moveEntity( &map, map.getPlayerGuy(), houseLeft + 2, houseTop + 2 );
+	
 	// put a key to the right of the player
 	map.putKey( map.getPlayerGuy()->x +1, map.getPlayerGuy()->y );
+	
+	printf( "Number of entities: %d\n", map.entities.size() );
 	
 	return;
 }

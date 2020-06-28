@@ -13,6 +13,8 @@
 #define NUM_GRASS_TILES 6
 #define NUM_GRAVEL_TILES 3
 
+#define FOREST_DENSITY 15
+
 #define MAX_ENTITIES 600000
 
 enum DIRECTION { North, South, East, West };
@@ -30,7 +32,8 @@ enum class BASE_TYPES {
 	GarlicFlower,
 	Water,
 	Tree,
-	Dirt
+	Dirt,
+	Pavement
 };
 
 enum class ENTITY_TYPES {
@@ -244,6 +247,9 @@ void persuePlayer( Entity* undead, int directionFlags );
 void undeadFlee( Entity* undead, int directionFlags );
 int undeadCheckRect( Entity* undead );
 void setUndeadTime( unsigned int currentTime, unsigned int maxTime );
+
+// roads.cpp
+void buildRoads( MapSet* map, int gridSizeWidth, int gridSizeHeight, int blockSize );
 
 
 

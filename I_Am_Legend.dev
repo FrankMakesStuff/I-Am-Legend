@@ -5,8 +5,8 @@ Type=1
 Ver=2
 ObjFiles=
 Includes=
-Libs=C:\Users\Frank\GitStuff\I_Am_Dwarf
-PrivateResource=
+Libs=C:\Users\Frank\GitStuff\I_Am_Legend
+PrivateResource=I_Am_Legend_private.rc
 ResourceIncludes=
 MakeIncludes=
 Compiler=
@@ -29,24 +29,24 @@ IncludeVersionInfo=1
 SupportXPThemes=0
 CompilerSet=0
 CompilerSettings=10000000c0000000000000000
-UnitCount=15
+UnitCount=16
 
 [VersionInfo]
 Major=0
 Minor=0
 Release=0
-Build=581
+Build=873
 LanguageID=1033
 CharsetID=1252
 CompanyName=
-FileVersion=0.0.0.581
+FileVersion=0.0.0.873
 FileDescription=I Am Legend game, inspired by Dwarf Fortress
 InternalName=
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=
 ProductName=I Am Legend
-ProductVersion=0.0.0.581
+ProductVersion=0.0.0.873
 AutoIncBuildNr=1
 SyncProduct=1
 
@@ -192,6 +192,16 @@ BuildCmd=
 
 [Unit15]
 FileName=undead.cpp
+CompileCpp=1
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit16]
+FileName=roads.cpp
 CompileCpp=1
 Folder=
 Compile=1

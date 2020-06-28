@@ -30,3 +30,6 @@ inline PLAYERACTION operator&( PLAYERACTION a, PLAYERACTION b ){
 
 PLAYERACTION getPlayerAction();
 bool isAction( PLAYERACTION flags, PLAYERACTION action );
+
+void requestQuit();
+bool getQuit();

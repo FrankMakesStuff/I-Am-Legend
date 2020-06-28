@@ -124,6 +124,13 @@ void MapTile::setType( BASE_TYPES type ){
 			this->tileset_x = 400;
 			this->tileset_y = 0;
 			this->health = 50000;
+			
+		case BASE_TYPES::Pavement:
+			this->baseType = type;
+			this->tileset_x = 32;
+			this->tileset_y = 16;
+			this->health = 30;
+			break;
 		
 		default:
 			break;
@@ -961,7 +968,7 @@ void MapSet::fillTrees( unsigned int density ){
 	
 	unsigned int treeCount = 0;
 	
-	printf( "* Planting trees...\n" );
+	printf( "Planting trees...\n" );
 	for( i = 0; i < density; ++i ){
 		x = rand() % this->szWidth;
 		y = rand() % this->szHeight;
@@ -973,13 +980,13 @@ void MapSet::fillTrees( unsigned int density ){
 	}
 	
 	// spawn neighbors
-	for( int j = 0; j < density; ++j ){
+	for( int j = 0; j < FOREST_DENSITY; ++j ){
 		for( i = 0; i < this->entities.size(); ++i ){   // Entire entities list, but only checking for trees
 			Entity* p = &this->entities[i];
 			if( p->getType() == ENTITY_TYPES::TreeBuilder ){ // proceed only if its a tree
 				x = (rand() % 3) - 1;
 				y = (rand() % 3) - 1;
-				if( x!=0 && y!=0 ){ // If x is non-zero AND y is non-zero, avoids base location and puts on diagonal
+				if( !(x==0 && y==0) ){ // If x is non-zero AND y is non-zero, avoids base location and puts on diagonal
 					x += p->x;
 					y += p->y;
 					
@@ -999,7 +1006,7 @@ void MapSet::fillTrees( unsigned int density ){
 		}
 	}
 	
-	printf( "- %s total trees have been planted.\n", getPrettyNumber( treeCount ).c_str() );
+	printf( "%s total trees have been planted.\n", getPrettyNumber( treeCount ).c_str() );
 	
 	// Commit tree entities to map tiles, and delete entities
 	for( i = this->entities.size() - 1; i > 0; --i ){ // start at the end because the list is being shortened as we go
@@ -1038,6 +1045,12 @@ bool MapSet::addEntity( Entity e ){
 	// the new memory location in the vector list,
 	// as this "renegade" entity will be destroyed
 	// once it's commited to the vector list.
+	
+	if( this->entities.size() == MAX_ENTITIES ){
+		printf( "ERROR: Max entities reached!\n" );
+		requestQuit();
+	}
+	
 	MapTile* t = e.getCurrentTile();
 	t->removeEntity();
 	this->entities.push_back( e );
@@ -1120,7 +1133,7 @@ MapTile* MapSet::putBuilding( unsigned int left, unsigned int top, unsigned int 
 	bool boundary = false, hasDoorway = false, inCorner = false;
 	MapTile *t, *nextToDoor;
 	
-	printf( "* Constructing a building...\n" );
+	printf( "Constructing a building...\n" );
 	
 	// increment the counter
 	buildingIterator++;
@@ -1210,7 +1223,7 @@ MapTile* MapSet::putBuilding( unsigned int left, unsigned int top, unsigned int 
 		}
 	}
 	
-	printf( "- Building complete. Cleared %d trees.\n", treeCount );
+	printf( "Building complete. Cleared %d trees.\n", treeCount );
 	
 	// Return the tile outside the front door
 	return nextToDoor;
@@ -1601,6 +1614,10 @@ bool moveEntity( MapSet* map, Entity* e, int x, int y ){
 			
 		// movement over dirt
 		if( tileNew->baseType == BASE_TYPES::Dirt )
+			validMovement = true;
+			
+		// movement over pavement
+		if( tileNew->baseType == BASE_TYPES::Pavement )
 			validMovement = true;
 			
 		// PlayerGuy can move thru unlocked doors (Will be blocked by LockableBarrier above)
@@ -2018,7 +2035,7 @@ void dropApples( MapSet* map, unsigned int amount ){
 			// apples only fall on grass, if the tile above is a tree
 			if( (t->baseType == BASE_TYPES::Grass) && (y > 0) ){
 				if( map->getTileAt( x, y - 1 )->baseType == BASE_TYPES::Tree ){
-					int fallChance = rand() % 100;
+					int fallChance = rand() % 1000;
 					if( fallChance < amount ){
 						Entity newApple( ENTITY_TYPES::Apple, t );
 						map->addEntity( newApple );
